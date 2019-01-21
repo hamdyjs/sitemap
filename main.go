@@ -13,13 +13,13 @@ func main() {
 	urlString := flag.String("url", "http://gophercises.com", "The url to build the sitemap of")
 	flag.Parse()
 
-	url, err := url.Parse(*urlString)
+	siteURL, err := url.Parse(*urlString)
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		return
 	}
 
-	siteLinks, err := getLinksFromURL(url.Path)
+	siteLinks, err := getLinksFromURL(siteURL.String())
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		return

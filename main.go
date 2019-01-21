@@ -48,6 +48,9 @@ func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
 			continue
 		}
 		referenceLink := pageLink.ResolveReference(childLink)
+		if referenceLink.Host != pageLink.Host {
+			continue
+		}
 		childLinks, err := getLinksFromURL(referenceLink)
 		if err != nil {
 			continue

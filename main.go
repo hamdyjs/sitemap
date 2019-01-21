@@ -30,8 +30,8 @@ func main() {
 	}
 }
 
-func getLinksFromURL(linkURL *url.URL) ([]link.Link, error) {
-	res, err := http.Get(linkURL.String())
+func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
+	res, err := http.Get(pageLink.String())
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +41,19 @@ func getLinksFromURL(linkURL *url.URL) ([]link.Link, error) {
 		return nil, err
 	}
 	res.Body.Close()
+
+	for _, linkStr := range links {
+		childLink, err := url.Parse(linkStr.Href)
+		if err != nil {
+			continue
+		}
+		referenceLink := pageLink.ResolveReference(childLink)
+		childLinks, err := getLinksFromURL(referenceLink)
+		if err != nil {
+			continue
+		}
+		links = append(links, childLinks...)
+	}
 
 	return links, nil
 }

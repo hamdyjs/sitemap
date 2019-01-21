@@ -4,15 +4,22 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/hamdyjs/link"
 )
 
 func main() {
-	url := flag.String("url", "http://gophercises.com", "The url to build the sitemap of")
+	urlString := flag.String("url", "http://gophercises.com", "The url to build the sitemap of")
 	flag.Parse()
 
-	siteLinks, err := getLinksFromURL(*url)
+	url, err := url.Parse(*urlString)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		return
+	}
+
+	siteLinks, err := getLinksFromURL(url.Path)
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		return

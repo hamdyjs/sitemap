@@ -42,13 +42,14 @@ func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
 	}
 	res.Body.Close()
 
-	for _, linkStr := range links {
+	for i, linkStr := range links {
 		childLink, err := url.Parse(linkStr.Href)
 		if err != nil {
 			continue
 		}
 		referenceLink := pageLink.ResolveReference(childLink)
 		if referenceLink.Host != pageLink.Host {
+			links = append(links[:i], links[i+1:]...)
 			continue
 		}
 		childLinks, err := getLinksFromURL(referenceLink)

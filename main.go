@@ -25,7 +25,9 @@ func main() {
 		return
 	}
 
-	fmt.Printf("%+v", siteLinks)
+	for _, link := range siteLinks {
+		fmt.Println(link)
+	}
 }
 
 func getLinksFromURL(linkURL *url.URL) ([]link.Link, error) {

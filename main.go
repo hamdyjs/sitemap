@@ -19,7 +19,7 @@ func main() {
 		return
 	}
 
-	siteLinks, err := getLinksFromURL(siteURL.String())
+	siteLinks, err := getLinksFromURL(siteURL)
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		return
@@ -28,8 +28,8 @@ func main() {
 	fmt.Printf("%+v", siteLinks)
 }
 
-func getLinksFromURL(url string) ([]link.Link, error) {
-	res, err := http.Get(url)
+func getLinksFromURL(linkURL *url.URL) ([]link.Link, error) {
+	res, err := http.Get(linkURL.String())
 	if err != nil {
 		return nil, err
 	}

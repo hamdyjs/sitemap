@@ -59,5 +59,17 @@ func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
 		links = append(links, childLinks...)
 	}
 
+	oldLinks := make([]link.Link, len(links))
+	copy(oldLinks, links)
+	links = make([]link.Link, 0)
+	linksDone := make(map[string]bool)
+	for _, link := range oldLinks {
+		fmt.Println(link.Href, linksDone[link.Href])
+		if !linksDone[link.Href] {
+			links = append(links, link)
+		}
+		linksDone[link.Href] = true
+	}
+
 	return links, nil
 }

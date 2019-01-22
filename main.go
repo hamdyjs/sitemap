@@ -42,14 +42,16 @@ func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
 	}
 	res.Body.Close()
 
-	for i, linkStr := range links {
-		childLink, err := url.Parse(linkStr.Href)
+	externalLinks := make(map[string]bool)
+
+	for _, link := range links {
+		childLink, err := url.Parse(link.Href)
 		if err != nil {
 			continue
 		}
 		referenceLink := pageLink.ResolveReference(childLink)
 		if referenceLink.Host != pageLink.Host {
-			links = append(links[:i], links[i+1:]...)
+			externalLinks[link.Href] = true
 			continue
 		}
 		childLinks, err := getLinksFromURL(referenceLink)
@@ -59,17 +61,15 @@ func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
 		links = append(links, childLinks...)
 	}
 
-	oldLinks := make([]link.Link, len(links))
-	copy(oldLinks, links)
-	links = make([]link.Link, 0)
+	// Filter duplicate and external links
 	linksDone := make(map[string]bool)
-	for _, link := range oldLinks {
-		fmt.Println(link.Href, linksDone[link.Href])
-		if !linksDone[link.Href] {
-			links = append(links, link)
+	finalLinks := links[:0]
+	for _, link := range links {
+		if !linksDone[link.Href] && !externalLinks[link.Href] {
+			finalLinks = append(finalLinks, link)
+			linksDone[link.Href] = true
 		}
-		linksDone[link.Href] = true
 	}
 
-	return links, nil
+	return finalLinks, nil
 }

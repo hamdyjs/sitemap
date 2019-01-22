@@ -1,13 +1,26 @@
 package main
 
 import (
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/hamdyjs/link"
 )
+
+const xmlns = "http://www.sitemaps.org/schemas/sitemap/0.9"
+
+type xmlURL struct {
+	Location string `xml:"loc"`
+}
+
+type urlset struct {
+	Links     []xmlURL `xml:"url"`
+	Namespace string   `xml:"xmlns,attr"`
+}
 
 func main() {
 	urlString := flag.String("url", "http://gophercises.com", "The url to build the sitemap of")
@@ -27,6 +40,18 @@ func main() {
 
 	for _, link := range siteLinks {
 		fmt.Println(link)
+	}
+
+	urlset := urlset{Namespace: xmlns}
+	for _, link := range siteLinks {
+		urlset.Links = append(urlset.Links, xmlURL{link.Href})
+	}
+
+	fmt.Print(xml.Header)
+	enc := xml.NewEncoder(os.Stdout)
+	enc.Indent("", "  ")
+	if err := enc.Encode(urlset); err != nil {
+		panic(err)
 	}
 }
 

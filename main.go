@@ -32,19 +32,19 @@ func main() {
 		return
 	}
 
-	siteLinks, err := getLinksFromURL(siteURL)
+	siteURLs, err := getLinksFromURL(siteURL)
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		return
 	}
 
-	for _, link := range siteLinks {
+	for _, link := range siteURLs {
 		fmt.Println(link)
 	}
 
 	urlset := urlset{Namespace: xmlns}
-	for _, link := range siteLinks {
-		urlset.Links = append(urlset.Links, xmlURL{link.Href})
+	for _, url := range siteURLs {
+		urlset.Links = append(urlset.Links, xmlURL{url.String()})
 	}
 
 	fmt.Print(xml.Header)
@@ -55,14 +55,14 @@ func main() {
 	}
 }
 
-var linksFetched = make(map[string]bool)
+var urlsFetched = make(map[string]bool)
 
-func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
-	if linksFetched[pageLink.String()] {
+func getLinksFromURL(pageURL *url.URL) ([]*url.URL, error) {
+	if urlsFetched[pageURL.String()] {
 		return nil, nil
 	}
-	linksFetched[pageLink.String()] = true
-	res, err := http.Get(pageLink.String())
+	urlsFetched[pageURL.String()] = true
+	res, err := http.Get(pageURL.String())
 	if err != nil {
 		return nil, err
 	}
@@ -73,34 +73,38 @@ func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
 	}
 	res.Body.Close()
 
-	externalLinks := make(map[string]bool)
-
+	urls := make([]*url.URL, 0)
 	for _, link := range links {
-		childLink, err := url.Parse(link.Href)
+		if url, err := url.Parse(link.Href); err == nil {
+			referenceURL := pageURL.ResolveReference(url)
+			urls = append(urls, referenceURL)
+		}
+	}
+
+	externalURLS := make(map[string]bool)
+
+	for _, childURL := range urls {
+		referenceURL := pageURL.ResolveReference(childURL)
+		if referenceURL.Host != pageURL.Host {
+			externalURLS[referenceURL.String()] = true
+			continue
+		}
+		childURLs, err := getLinksFromURL(referenceURL)
 		if err != nil {
 			continue
 		}
-		referenceLink := pageLink.ResolveReference(childLink)
-		if referenceLink.Host != pageLink.Host {
-			externalLinks[link.Href] = true
-			continue
-		}
-		childLinks, err := getLinksFromURL(referenceLink)
-		if err != nil {
-			continue
-		}
-		links = append(links, childLinks...)
+		urls = append(urls, childURLs...)
 	}
 
 	// Filter duplicate and external links
-	linksDone := make(map[string]bool)
-	finalLinks := links[:0]
-	for _, link := range links {
-		if !linksDone[link.Href] && !externalLinks[link.Href] {
-			finalLinks = append(finalLinks, link)
-			linksDone[link.Href] = true
+	urlsDone := make(map[string]bool)
+	finalURLs := urls[:0]
+	for _, url := range urls {
+		if !urlsDone[url.String()] && !externalURLS[url.String()] {
+			finalURLs = append(finalURLs, url)
+			urlsDone[url.String()] = true
 		}
 	}
 
-	return finalLinks, nil
+	return finalURLs, nil
 }

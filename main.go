@@ -30,7 +30,13 @@ func main() {
 	}
 }
 
+var linksFetched = make(map[string]bool)
+
 func getLinksFromURL(pageLink *url.URL) ([]link.Link, error) {
+	if linksFetched[pageLink.String()] {
+		return nil, nil
+	}
+	linksFetched[pageLink.String()] = true
 	res, err := http.Get(pageLink.String())
 	if err != nil {
 		return nil, err
